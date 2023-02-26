@@ -68,7 +68,7 @@ def randomTransform(frames):
 
 class SyntheticDataset(Dataset):
     
-    def __init__(self, videoPath, filename, extension, length):
+    def __init__(self, videoPath, filename, extension, length,frame_per_vid):
         
         self.sourcePath = videoPath + '/' + filename + '.' + extension
         self.length = length

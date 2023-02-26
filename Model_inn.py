@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import math
 
 #============classes===================
-
+# compute Temporal Self-similarity Matrix
 class Sims(nn.Module):
     def __init__(self):
         super(Sims, self).__init__()
@@ -31,7 +31,7 @@ class Sims(nn.Module):
 class ResNet50Bottom(nn.Module):
     def __init__(self):
         super(ResNet50Bottom, self).__init__()
-        self.original_model = torchvision.models.resnet50(pretrained=True, progress=True)
+        self.original_model = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT, progress=True)
         self.activation = {}
         h = self.original_model.layer3[2].register_forward_hook(self.getActivation('comp'))
         
@@ -138,51 +138,51 @@ class RepNet(nn.Module):
 
     def forward(self, x, ret_sims = False):
         batch_size, _, c, h, w = x.shape
-        x = x.view(-1, c, h, w)
-        x = self.resnetBase(x)
-        x = x.view(batch_size, self.num_frames, x.shape[1],  x.shape[2],  x.shape[3])
-        x = x.transpose(1, 2)
-        x = F.relu(self.bn1(self.conv3D(x)))
+        x = x.view(-1, c, h, w) # [64, 3, 112, 112]
+        x = self.resnetBase(x) # [64, 1024, 7, 7]
+        x = x.view(batch_size, self.num_frames, x.shape[1],  x.shape[2],  x.shape[3]) # [1, 64, 1024, 7, 7]
+        x = x.transpose(1, 2) # [1, 1024, 64, 7, 7]
+        x = F.relu(self.bn1(self.conv3D(x))) # [1, 512, 64, 7, 7]
                         
-        x = x.view(batch_size, 512, self.num_frames, 7, 7)
-        x = self.pool(x).squeeze(3).squeeze(3)
-        x = x.transpose(1, 2)                           #batch, num_frame, 512
-        x = x.reshape(batch_size, self.num_frames, -1)
+        x = x.view(batch_size, 512, self.num_frames, 7, 7) # [1, 512, 64, 7, 7]
+        x = self.pool(x).squeeze(3).squeeze(3) # [1, 512, 64]
+        x = x.transpose(1, 2)                           #batch, num_frame, 512 [1, 64, 512]
+        x = x.reshape(batch_size, self.num_frames, -1) # [1, 64, 512]
 
-        x1 = F.relu(self.sims(x))
+        x1 = F.relu(self.sims(x)) # [1, 1, 64, 64] TSM 
         
         
-        x = x.transpose(0, 1)
-        _, x2 = self.mha_sim(x, x, x)
-        x2 = F.relu(x2.unsqueeze(1))
-        x = torch.cat([x1, x2], dim = 1)
+        x = x.transpose(0, 1) # [64, 1, 512]
+        _, x2 = self.mha_sim(x, x, x) # [1, 64, 64]
+        x2 = F.relu(x2.unsqueeze(1)) # [1, 1, 64, 64]
+        x = torch.cat([x1, x2], dim = 1) # [1, 2, 64, 64]
         
         xret = x
-        print(xret.shape)
+        print(xret.shape) # [1, 2, 64, 64]
         
-        x = F.relu(self.bn2(self.conv3x3(x)))     #batch, 32, num_frame, num_frame
+        x = F.relu(self.bn2(self.conv3x3(x)))     #batch, 32, num_frame, num_frame # [1, 32, 64, 64]
         #print(x.shape)
-        x = self.dropout1(x)
+        x = self.dropout1(x) # [1, 32, 64, 64]
 
-        x = x.permute(0, 2, 3, 1)
-        x = x.reshape(batch_size, self.num_frames, -1)  #batch, num_frame, 32*num_frame
-        x = self.ln1(F.relu(self.input_projection(x)))  #batch, num_frame, d_model=512
+        x = x.permute(0, 2, 3, 1) # [1, 64, 64, 32]
+        x = x.reshape(batch_size, self.num_frames, -1)  #batch, num_frame, 32*num_frame  [1, 64, 2048])
+        x = self.ln1(F.relu(self.input_projection(x)))  #batch, num_frame, d_model=512  [1, 64, 512]
         
-        x = x.transpose(0, 1)                          #num_frame, batch, d_model=512
+        x = x.transpose(0, 1)                          #num_frame, batch, d_model=512 [64, 1, 512]
         
         #period
-        x1 = self.transEncoder1(x)
-        y1 = x1.transpose(0, 1)
-        y1 = F.relu(self.ln1_2(self.fc1_1(y1)))
-        y1 = F.relu(self.fc1_2(y1))
-        y1 = F.relu(self.fc1_3(y1))
+        x1 = self.transEncoder1(x) # [64, 1, 512]
+        y1 = x1.transpose(0, 1) # [1,64,512]
+        y1 = F.relu(self.ln1_2(self.fc1_1(y1))) # [1,64,512]
+        y1 = F.relu(self.fc1_2(y1)) # [1,64,32]
+        y1 = F.relu(self.fc1_3(y1)) # [1,64,1]
 
         #periodicity
-        x2 = self.transEncoder2(x)
-        y2 = x2.transpose(0, 1)
+        x2 = self.transEncoder2(x) # [64, 1, 512]
+        y2 = x2.transpose(0, 1) # 
         y2 = F.relu(self.ln2_2(self.fc2_1(y2)))
         y2 = F.relu(self.fc2_2(y2))
-        y2 = F.relu(self.fc2_3(y2)) 
+        y2 = F.relu(self.fc2_3(y2)) # [1,64,1]
         
         #y1 = y1.transpose(1, 2)                         #Cross enropy wants (minbatch*classes*dimensions)
         if ret_sims:

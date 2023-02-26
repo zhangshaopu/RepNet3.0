@@ -109,12 +109,12 @@ def training_loop(n_epochs,
     lossBCE = torch.nn.BCEWithLogitsLoss()
     train_loader = DataLoader(train_set, 
                               batch_size=batch_size, 
-                              num_workers=1, 
+                              num_workers=0, 
                               shuffle = True)
     
     val_loader = DataLoader(val_set,
                             batch_size = batch_size,
-                            num_workers=1,
+                            num_workers=0,
                             drop_last = False,
                             shuffle = True)
     
@@ -133,7 +133,6 @@ def training_loop(n_epochs,
             i = 1
             a=0
             for X, y in pbar:
-                
                 torch.cuda.empty_cache()
                 model.train()
                 X = X.to(device).float()
