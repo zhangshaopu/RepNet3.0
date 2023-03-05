@@ -62,7 +62,7 @@ random.shuffle(trainList)
 trainDataset = ConcatDataset(trainList)
 
 model =  RepNet(frame_per_vid)
-summary(model,input_size = (1, 64, 3, 112, 112)) # batchsize = 1 , frame = 64 , 112 * 112 * 3 
+# summary(model,input_size = (1, 64, 3, 112, 112)) # batchsize = 1 , frame = 64 , 112 * 112 * 3 
 model = model.to(device)
 
 print("done")

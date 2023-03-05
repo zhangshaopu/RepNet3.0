@@ -43,7 +43,7 @@ def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0)) 
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
-
+# 用于计算视频的周期性得分，期长大于等于3的被视为具有周期性，得分为1，否则得分为0。
 def getPeriodicity(periodLength):
     periodicity = torch.nn.functional.threshold(periodLength, 2, 0)
     periodicity = -torch.nn.functional.threshold(-periodicity, -1, -1)
@@ -75,8 +75,6 @@ def training_loop(n_epochs,
                   train = True,
                   validate = True,
                   lastCkptPath = None):
-
-    
     
     prevEpoch = 0
     trainLosses = []
@@ -110,7 +108,8 @@ def training_loop(n_epochs,
     train_loader = DataLoader(train_set, 
                               batch_size=batch_size, 
                               num_workers=0, 
-                              shuffle = True)
+                              shuffle = True,
+                              )
     
     val_loader = DataLoader(val_set,
                             batch_size = batch_size,
@@ -136,10 +135,10 @@ def training_loop(n_epochs,
                 torch.cuda.empty_cache()
                 model.train()
                 X = X.to(device).float()
-                y1 = y.to(device).float()
-                y2 = getPeriodicity(y1).to(device).float()
+                y1 = y.to(device).float() # [1,64,1]
+                y2 = getPeriodicity(y1).to(device).float() # [1,64,1]
                 
-                y1pred, y2pred = model(X)
+                y1pred, y2pred , _ = model(X)
                 loss1 = lossMAE(y1pred, y1)
                 loss2 = lossBCE(y2pred, y2)
 
