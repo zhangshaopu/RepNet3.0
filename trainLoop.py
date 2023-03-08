@@ -70,7 +70,7 @@ def training_loop(n_epochs,
                   batch_size,
                   lr = 6e-6,
                   ckpt_name = 'ckpt',
-                  use_count_error = True,
+                  use_count_error = False,
                   saveCkpt= True,
                   train = True,
                   validate = True,
@@ -105,11 +105,19 @@ def training_loop(n_epochs,
     
     lossMAE = torch.nn.SmoothL1Loss()
     lossBCE = torch.nn.BCEWithLogitsLoss()
+    lossCrossEntropy = torch.nn.CrossEntropyLoss()
     train_loader = DataLoader(train_set, 
                               batch_size=batch_size, 
                               num_workers=0, 
                               shuffle = True,
                               )
+    #迭代获取数据
+    # for batch_idx, (data, target) in enumerate(train_loader):
+    #     # 打印数据的形状和标签
+    #     print('Batch Index : {}\nData Shape : {}\nTarget Shape : {}'.format(batch_idx+1, data.shape, target.shape))
+    #     # 打印前5个数据和标签
+    #     print('Sample data : \n{}\nSample target: \n{}'.format(data[:5], target[:5]))
+
     
     val_loader = DataLoader(val_set,
                             batch_size = batch_size,
@@ -139,8 +147,9 @@ def training_loop(n_epochs,
                 y2 = getPeriodicity(y1).to(device).float() # [1,64,1]
                 
                 y1pred, y2pred , _ = model(X)
-                loss1 = lossMAE(y1pred, y1)
-                loss2 = lossBCE(y2pred, y2)
+                # loss1 = lossMAE(y1pred, y1) # [1, 64, 32]  [1, 64, 1]
+                loss1 = lossCrossEntropy(y1pred.squeeze(0) , y1.type(torch.cuda.LongTensor).squeeze(0).squeeze(1)) # [64, 32]  [64, ]
+                loss2 = lossBCE(y2pred, y2) # [1,64,1] [1,64,1]
 
                 loss = loss1 + 5*loss2
 

@@ -55,8 +55,8 @@ class miniDataset(Dataset):
         a = randint(0, 64 - output_len)
         b = 64 - output_len - a
         
-        randpath = random.choice(glob.glob('E:/dataset/synthvids/train*.mp4'))
-        randFrames = self.getFrames(randpath)
+        # randpath = random.choice(glob.glob('E:/dataset/synthvids/train*.mp4'))
+        randFrames = self.getFrames(self.path)
         newRandFrames = []
         for i in range(1, a + b + 1):
             newRandFrames.append(randFrames[i * len(randFrames)//(a+b)  - 1])

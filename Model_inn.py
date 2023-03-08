@@ -153,7 +153,8 @@ def flatten_sequential_feats(x, batch_size, seq_len):
 #=============Model====================
 
 class RepNet(nn.Module):
-    def __init__(self, num_frames,
+    def __init__(self,
+                 num_frames,
                  transformer_layers_config=((512, 4, 512),),
                  transformer_reorder_ln = True,
                  transformer_dropout_rate = 0.0,
@@ -232,7 +233,7 @@ class RepNet(nn.Module):
         num_preds = 1
         self.within_period_fc_layers = []
         for channels in self.within_period_fc_channels:
-            self.within_period_fc_layers.append(nn.Linear(512,channels))
+            self.within_period_fc_layers.append(nn.Linear(512 , channels))
         self.within_period_fc_layers.append(nn.Linear(512 , num_preds))
 
         self.ln1 = nn.LayerNorm(512)
@@ -292,9 +293,10 @@ class RepNet(nn.Module):
             x1 = transformer_layer(x1) # [1, 64, 512] 
         x1 = flatten_sequential_feats(x1, batch_size, self.num_frames) # [1, 64, 512]
         for fc_layer in self.fc_layers:
-            x1 = self.dropout_layer(x1) # [1, 64, 512]
             fc_layer.to(self.device)
-            x1 = fc_layer(x1) # [1, 64, 512]
+            x1 = self.dropout_layer(x1) # [1, 64, 512]
+            x1 = fc_layer(x1) # [1, 64, 512] 论文里的period length li
+        
 
         # Within period prediction.
         within_period_x = self.input_projection2(within_period_x) # [1, 64, 512] 
@@ -305,11 +307,11 @@ class RepNet(nn.Module):
 
         within_period_x = flatten_sequential_feats(within_period_x,
                                             batch_size,
-                                            self.num_frames) #     
+                                            self.num_frames)  
         for fc_layer in self.within_period_fc_layers: # [1, 64, 512]  [1, 64, 512] [1, 64, 1]
             fc_layer.to(self.device)
             within_period_x = self.dropout_layer(within_period_x) # 
-            within_period_x = fc_layer(within_period_x) # 
+            within_period_x = fc_layer(within_period_x) # 论文里的periodicity pi
 
         return x1, within_period_x, final_embs # [1, 64, 32]  [1, 64, 1] [1, 64, 512]
         # attn_output, attn_output_weights = self.mha_sim(x1, x1, x1) 

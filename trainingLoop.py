@@ -32,11 +32,11 @@ testDatasetC = getCombinedDataset('countix/countix_test.csv',
                                    frame_per_vid=frame_per_vid,
                                    multiple=multiple
                                 )
-testDatasetS = SyntheticDataset('E:/dataset/synthvids', 'train*', 'mp4', 2000,
-                                   frame_per_vid=frame_per_vid
-                                )
+# testDatasetS = SyntheticDataset('E:/dataset/synthvids', 'train*', 'mp4', 2000,
+#                                    frame_per_vid=frame_per_vid
+#                                 )
 
-testList = [testDatasetC, testDatasetS]
+testList = [testDatasetC]
 random.shuffle(testList)
 testDataset = ConcatDataset(testList)
 
@@ -51,13 +51,13 @@ trainDatasetC = getCombinedDataset('countix/countix_train.csv',
 #                                   frame_per_vid=frame_per_vid)
 #trainDatasetS2 = SyntheticDataset('/home/saurabh/Downloads', '1917', 'mkv', 500,
 #                                   frame_per_vid=frame_per_vid)
-trainDatasetS3 = SyntheticDataset('E:/dataset/synthvids', 'train*', 'mp4', 3000,
-                                   frame_per_vid=frame_per_vid)
+# trainDatasetS3 = SyntheticDataset('E:/dataset/synthvids', 'train*', 'mp4', 3000,
+#                                    frame_per_vid=frame_per_vid)
 #trainDatasetS4 = SyntheticDataset('/home/saurabh/Downloads', 'HP6', 'mkv', 500,
 #                                   frame_per_vid=frame_per_vid)
-trainDatasetB = BlenderDataset('E:/dataset/blendervids', 'videos', 'annotations', frame_per_vid)
+# trainDatasetB = BlenderDataset('E:/dataset/blendervids', 'videos', 'annotations', frame_per_vid)
 
-trainList = [trainDatasetC, trainDatasetS3] #, trainDatasetB]
+trainList = [trainDatasetC] #, trainDatasetB]
 random.shuffle(trainList)
 trainDataset = ConcatDataset(trainList)
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                                     1,
                                     6e-5,
                                     'x3dbb',
-                                    use_count_error=True,
+                                    use_count_error=False,
                                     saveCkpt = 1,
                                     train = 1,
                                     validate = 1,
