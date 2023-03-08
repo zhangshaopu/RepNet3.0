@@ -56,7 +56,7 @@ trainDatasetC = getCombinedDataset('countix/countix_train.csv',
 #trainDatasetS4 = SyntheticDataset('/home/saurabh/Downloads', 'HP6', 'mkv', 500,
 #                                   frame_per_vid=frame_per_vid)
 # #trainDatasetB = BlenderDataset('E:/dataset/blendervids', 'videos', 'annotations', frame_per_vid)
-
+#test
 trainList = [trainDatasetC] #, trainDatasetB]
 random.shuffle(trainList)
 trainDataset = ConcatDataset(trainList)
